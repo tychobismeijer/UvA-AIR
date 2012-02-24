@@ -1,0 +1,5 @@
+This program converts the CLEF input documents in a bag of word senses. This can
+be done with FreeLing/UKB. FreeLing is a C++ library/limited command line
+program.
+
+Language: C++ / Bash Script

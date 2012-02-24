@@ -1,0 +1,5 @@
+Scripts that preprocess the documents to a common format. In the common format a
+documents takes three lines. The first line contains the document id, the second
+the contents, the third is empty. On the fourth line the next entry starts.
+
+Language: Python (2 or 3) / any

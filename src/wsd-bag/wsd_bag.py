@@ -24,12 +24,32 @@ def print_pos_results(results, out):
             out.write(word.get_form() + "[" + word.get_tag() + "] ")
         out.write("||\n")
 
+def print_wsd_results(results, out):
+    for sentence in results:
+        for word in sentence.get_words():
+            out.write(word.get_form() + "[")
+            senses = parse_senses_string(word.get_senses_string())
+            if (senses):
+                out.write(senses[0][1])
+            out.write("] ")
+        out.write("||\n")
+
+def parse_senses_string(senses):
+    if (senses == ''):
+        return []
+    s_list = []
+    for s in senses.split('/'):
+        s_id, s_prob = s.split(':')
+        s_list.append((float(s_prob), s_id))
+    return s_list
+
 
 def analyze(text, tools):
     t = tools['tk'].tokenize(text)
     t = tools['sp'].split(t, True)
     t = tools['mf'].analyze(t)
     t = tools['pos'].analyze(t)
+    t = tools['wsd'].analyze(t)
     return t
 
 def main():
@@ -70,9 +90,11 @@ def main():
         data_l+"/corrector/corrector.dat");
     tools['mf'] = freeling.maco(op)
 
+    tools['wsd'] = freeling.ukb_wrap(data_l+'/ukb.dat')
+
     for line in sys.stdin:
         a = analyze(line, tools)
-        print_pos_results(a, sys.stdout)
+        print_wsd_results(a, sys.stdout)
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,5 @@
+[wsd]
+language = en
+[freeling]
+dir = /usr
+datadir = %(dir)s/share/freeling

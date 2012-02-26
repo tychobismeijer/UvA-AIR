@@ -1,5 +1,21 @@
 This program converts the CLEF input documents in a bag of word senses. This can
-be done with FreeLing/UKB. FreeLing is a C++ library/limited command line
-program.
+be done with FreeLing/UKB.
 
-Language: C++ / Bash Script
+To use:
+    1. Install Freeling 3 + Python API. If you compile from source the api is in
+    APIs/Python, read README and compile. If you put freeling.py and
+    _freeling.so in $HOME/.local/lib/python3.?/site-packages you can use the
+    module easily.
+
+    2. Copy wsd_bag.ini.example to wsd_bag.ini and change to match you Freeling
+    installation.
+
+    3. Get a document and preproces a list of document using the preprocess tools.
+        python ../preprocess/pp-gh.py 950102.sgml > d.txt
+
+    4. Run this script
+        python3 wsd_bag.py d.txt
+
+
+Language: Python 3
+Libraries: Freeling 3

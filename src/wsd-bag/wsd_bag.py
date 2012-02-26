@@ -7,24 +7,25 @@
 import freeling
 import sys
 import configparser
-from pprint import pprint as pp
 
 CONFIG='wsd_bag.ini'
 
-
 def print_split_results(results, out):
+    """Formatted output of sentence splitting"""
     for sentence in results:
         for word in sentence.get_words():
             out.write(word.get_form() + "|")
         out.write("||\n")
 
 def print_pos_results(results, out):
+    """Formatted output of part of speech tagging"""
     for sentence in results:
         for word in sentence.get_words():
             out.write(word.get_form() + "[" + word.get_tag() + "] ")
         out.write("||\n")
 
 def print_wsd_results(results, out):
+    """Formatted output of senses"""
     for sentence in results:
         for word in sentence.get_words():
             out.write(word.get_form() + "[")
@@ -34,7 +35,9 @@ def print_wsd_results(results, out):
             out.write("] ")
         out.write("||\n")
 
+# Use this method because the array access to senses gives a memory leak.
 def parse_senses_string(senses):
+    """Parses the senses output of ukb to an array"""
     if (senses == ''):
         return []
     s_list = []
@@ -44,7 +47,11 @@ def parse_senses_string(senses):
     return s_list
 
 def get_senses(sentences):
-    "Returns a list with the most probable sense for the words in the sentence."
+    """Get senses out of sentences and return the most probable.
+
+    Get the most probable sense of every word in the sentences. Words without a
+    senses are skipped over.
+    """
     senses = []
     for sentence in sentences:
         for word in sentence.get_words():
@@ -55,6 +62,11 @@ def get_senses(sentences):
 
 
 def analyze(text, tools):
+    """Run analysis on string text and return a list of sentences.
+
+    The tools to be used are in the dictionary tools, which should be set up
+    with setup_tools().
+    """
     t = tools['tk'].tokenize(text)
     t = tools['sp'].split(t, True)
     t = tools['mf'].analyze(t)
@@ -63,6 +75,15 @@ def analyze(text, tools):
     return t
 
 def setup_tools(config_fn):
+    """Setup Freeling tools according to a config file.
+
+        The tools returned is a dictionary with the following keys:
+        tk : The tokenizer
+        sp : The sentence splitter
+        pos : The part of speech tagger
+        mf : The morphological analysis tools (freeling.maco)
+        wsd : word sense tagger
+    """
     config = configparser.ConfigParser()
     config.read(config_fn)
     language = config['wsd']['language']
@@ -73,8 +94,9 @@ def setup_tools(config_fn):
     freeling.util_init_locale("default")
     tools['tk'] = freeling.tokenizer(data_l + "/tokenizer.dat")
     tools['sp'] = freeling.splitter(data_l + "/splitter.dat")
-    tools['pos'] = freeling.hmm_tagger(language, data_l + "/tagger.dat", 1,
-                                       2)
+    tools['pos'] = freeling.hmm_tagger(language, data_l + "/tagger.dat",
+            True, # Retokenize
+            2)    # Force selecting one PoS tag after retokenization
     op = freeling.maco_options(language);
     op.set_active_modules(
         0, # UserMap (for analysis of domain-specific tokens)
@@ -104,6 +126,10 @@ def setup_tools(config_fn):
     return tools
 
 def wsd_bag(docs_in, docs_out, tools):
+    """WSD the docs from docs_in and write the result to docs_out.
+        
+    Tools should be set up using setup_tools(). The document list should be
+    preprocessed."""
     while(True):
         doc_id = docs_in.readline()
         if (doc_id == ''):

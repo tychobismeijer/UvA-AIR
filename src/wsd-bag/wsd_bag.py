@@ -9,8 +9,8 @@ import sys
 import configparser
 from pprint import pprint as pp
 
+CONFIG='wsd_bag.ini'
 
-config_fn='wsd_bag.ini'
 
 def print_split_results(results, out):
     for sentence in results:
@@ -43,6 +43,16 @@ def parse_senses_string(senses):
         s_list.append((float(s_prob), s_id))
     return s_list
 
+def get_senses(sentences):
+    "Returns a list with the most probable sense for the words in the sentence."
+    senses = []
+    for sentence in sentences:
+        for word in sentence.get_words():
+            w_senses = parse_senses_string(word.get_senses_string())
+            if (w_senses):
+                senses.append(w_senses[0][1])
+    return senses
+
 
 def analyze(text, tools):
     t = tools['tk'].tokenize(text)
@@ -52,7 +62,7 @@ def analyze(text, tools):
     t = tools['wsd'].analyze(t)
     return t
 
-def main():
+def setup_tools(config_fn):
     config = configparser.ConfigParser()
     config.read(config_fn)
     language = config['wsd']['language']
@@ -89,12 +99,25 @@ def main():
         data+"/common/punct.dat",
         data_l+"/corrector/corrector.dat");
     tools['mf'] = freeling.maco(op)
-
     tools['wsd'] = freeling.ukb_wrap(data_l+'/ukb.dat')
 
-    for line in sys.stdin:
-        a = analyze(line, tools)
-        print_wsd_results(a, sys.stdout)
+    return tools
+
+def wsd_bag(docs_in, docs_out, tools):
+    while(True):
+        doc_id = docs_in.readline()
+        if (doc_id == ''):
+            break
+        docs_out.write(doc_id)
+        a = analyze(docs_in.readline(), tools)
+        for ws in get_senses(a): docs_out.write(ws + " ")
+        docs_out.write("\n\n")
+        docs_in.readline() # Skip over empty line
+
+def main():
+    tools = setup_tools(CONFIG)
+    for fn in sys.argv[1:]:
+        wsd_bag(open(fn), sys.stdout, tools)
 
 if __name__ == "__main__":
     main()

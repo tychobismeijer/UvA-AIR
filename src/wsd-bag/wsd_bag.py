@@ -1,9 +1,5 @@
 #!/usr/bin/python3
 
-# A script that should get the word senses
-# For now it just reads from stdin and returns 'tokenized' and sentence split
-# results.
-
 import freeling
 import sys
 import configparser
@@ -46,18 +42,24 @@ def parse_senses_string(senses):
         s_list.append((float(s_prob), s_id))
     return s_list
 
+
+# Ignore words without sense and with on of these PoS tags
+pos_tags_ignored = ["CC", "CD", "DT", "EX", "TO", "Fz", "Fx", "Fat", "Fc",
+        "Fd", "Fe", "Fg", "Fit", "Fp", "Fs", "Fx", "Fz"]
+
 def get_senses(sentences):
     """Get senses out of sentences and return the most probable.
 
-    Get the most probable sense of every word in the sentences. Words without a
-    senses are skipped over.
-    """
+    Get the most probable sense of every word in the sentences. If no sense can
+    be found the stemmed word itself is used."""
     senses = []
     for sentence in sentences:
         for word in sentence.get_words():
             w_senses = parse_senses_string(word.get_senses_string())
             if (w_senses):
                 senses.append(w_senses[0][1])
+            elif (not word.get_tag() in pos_tags_ignored):
+                senses.append(word.get_lemma() + "[" + word.get_short_tag() + "]")
     return senses
 
 
@@ -104,7 +106,7 @@ def setup_tools(config_fn):
         1, # MultiwordsDetection
         1, # NumbersDetection
         1, # PuctuationDetection
-        1, # DatesDetection
+        0, # DatesDetection, gives problems with words like "Monday"
         1, # QuantitiesDetection
         1, # DictionarySearch
         1, # ProbabilityAssignment (Essential for PoS)

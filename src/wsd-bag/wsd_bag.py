@@ -46,6 +46,8 @@ def parse_senses_string(senses):
 # Ignore words without sense and with on of these PoS tags
 pos_tags_ignored = ["CC", "CD", "DT", "EX", "TO", "Fz", "Fx", "Fat", "Fc",
         "Fd", "Fe", "Fg", "Fit", "Fp", "Fs", "Fx", "Fz"]
+# Words that need to be ignored, but are cannot be distinguished by PoS tag.
+stop_words = ["a", "an"] 
 
 def get_senses(sentences):
     """Get senses out of sentences and return the most probable.
@@ -58,8 +60,10 @@ def get_senses(sentences):
             w_senses = parse_senses_string(word.get_senses_string())
             if (w_senses):
                 senses.append(w_senses[0][1])
-            elif (not word.get_tag() in pos_tags_ignored):
-                senses.append(word.get_lemma() + "[" + word.get_short_tag() + "]")
+            elif (not (word.get_tag() in pos_tags_ignored or
+                       word.get_form() in stop_words)):
+                for w in word.get_words_mw():
+                    senses.append(w.get_form())
     return senses
 
 

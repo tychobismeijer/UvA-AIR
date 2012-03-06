@@ -1,0 +1,44 @@
+
+Objects that build and query the (Lucene) indexes. 
+
+
+BUILD (Index.py): constructs the index (config: StandardAnalyzer, terms tokenized and stored without further analysis). Can be used in two ways: 
+	  - Shell : 
+	    	  python index.py {build | read} {words | senses}
+
+		  Operations:
+		  		  Build -> Constructs the index, parsing the associated file. 
+		  		  Read -> Prints out the stored terms in the index, with its frequency. 
+
+		  Example files (words.txt and word_senses.txt) to build the example indexes ('words' and 'senses'). 
+
+	  - Library: an index can be created by using the class IndexHelper. It has a static method ("index"), which receives the 
+	    text to be indexed (following the specified format), and the name of the index to be built. 
+
+                f = open("./word_senses.txt").read()
+                indexName = "senses"
+		IndexHelper.index(f, indexName)
+	  
+
+QUERY (query.py): performs a query over existing indexes. Can be used in two ways: 
+
+      - Shell:
+		python query.py [indexName] [queryString]
+	
+		Ex: 
+		    $ python query.py senses 15287830-n
+		    [u'GH950111-000000', u'GH950111-000001', u'GH950111-000002', u'GH950111-000003', u'GH950111-000004']
+		    $ python query.py words "available who"
+		    [u'GH950111-000000', u'GH950111-000001', (..) , u'GH950111-000008']
+
+      - Library: an index can be queried by using the class QueryHelper. It has a static method ("query"), which receives the 
+      	    text to be queried (quoted, if more than 1 term), and the name of the index to be queried. 
+
+	    Ex:
+		indexName = "senses"
+		queryString = "15287830-n 15287831-n"
+		res = QueryHelper.query(indexName, queryString)	
+		
+	    	    
+		  		  
+	 

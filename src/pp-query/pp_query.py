@@ -28,7 +28,6 @@ def parse_topics(topics_text):
         for word in line.split():
             if(str_topic_start in word):
                 read_topic = True
-                print("read topic")
                 continue
 
             if(str_num_start in word):
@@ -87,17 +86,67 @@ def parse_topics(topics_text):
                 narr = ""
     return result
 
+def load_wolf(wolf_xml):
+    global sense_dict
+    sense_dict = {}
+    id_re = re.compile("<ID>(.*)</ID>")
+    literal_re = re.compile("<LITERAL>(.*?)(<SENSE>.*?</SENSE>)?</LITERAL>")
+    for line in wolf_xml:
+        id_m = id_re.search(line)
+        if(not id_m):
+            print("ERROR")
+            continue
+        sense_id = id_m.group(1)
+        literal_ms = literal_re.findall(line)
+        for literal_g in literal_ms:
+            word = literal_g[0]
+            sense_dict[word] = sense_dict.get(word, []) + [sense_id,]
 
+def normalize(word):
+    w = word.lower()
+    w = w.strip("\"'.,")
+    if(w.startswith("l'")):
+        w = w[2:]
+    if(w.startswith("d'")):
+        w = w[2:]
+    return w
 
+def word_senses(word):
+    return sense_dict.get(word, [])
 
+stop_words = ["le", "la", "les", "un", "une", "de", "des"]
+
+def words_wsexpand(words):
+    expansion = []
+    for word in words.split():
+        word_n = normalize(word)
+        if(word_n in stop_words):
+            continue # Remove stop words
+        ws = word_senses(word_n)
+        if(ws):
+            expansion = expansion + ws
+            continue
+        expansion.append(word_n)
+    return expansion
+
+def topics_wsexpand(topics, out):
+    for topic in topics:
+        expansion = words_wsexpand(topic["title"])
+        expansion = expansion + words_wsexpand(topic["desc"])
+        expansion = expansion + words_wsexpand(topic["narr"])
+        out.write(topic['num'] + "\n")
+        for w in expansion: out.write(w + " ")
+        out.write("\n\n")
 
 def main():
-    out = codecs.getwriter('utf8')(sys.stdout)
-    for fn in sys.argv[1:]:
-        print(parse_topics(codecs.open(fn, "r", "latin1")))
+    if(len(sys.argv) != 3):
+        print("Usage: pp-query wsexpand topicfilename")
+        exit(1)
+    out = sys.stdout
+    topics = parse_topics(codecs.open(sys.argv[2], "r", "latin1"))
+    if(sys.argv[1] == 'wsexpand'):
+        load_wolf(open('wolf.xml'))
+        topics_wsexpand(topics, out)
 
 if __name__ == "__main__":
     main()
-
-        
-        

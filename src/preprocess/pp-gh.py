@@ -7,6 +7,7 @@
 
 import sys
 import re
+import codecs
 
 def warning(message):
     print("Warning: " + message)
@@ -51,7 +52,7 @@ def preprocess(doc_in, doc_out):
 
 def main():
     for fn in sys.argv[1:]:
-        preprocess(open(fn), sys.stdout)
+        preprocess(codecs.open(fn, "r", "latin1"), sys.stdout)
 
 if __name__ == "__main__":
     main()

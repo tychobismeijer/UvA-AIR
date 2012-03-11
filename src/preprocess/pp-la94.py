@@ -8,6 +8,7 @@
 import sys
 import re
 import gzip
+import io
 
 def warning(message):
     print("Warning: " + message)
@@ -60,7 +61,10 @@ def preprocess(doc_in, doc_out):
 
 def main():
     for fn in sys.argv[1:]:
-        preprocess(gzip.open(fn), sys.stdout)
+        f_gz = gzip.open(fn)
+        f_gz.read1 = f_gz.read # Hack to fix 'bug' in gzip
+        f_w = io.TextIOWrapper(f_gz, 'latin1')
+        preprocess(f_w, sys.stdout)
 
 if __name__ == "__main__":
     main()

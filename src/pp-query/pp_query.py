@@ -14,6 +14,11 @@ str_narr_start  = "<FR-narr>"
 str_narr_stop   = "</FR-narr>"
 
 def parse_topics(topics_text):
+    """Parse a topics xml file into a list of dictionaries.
+
+    Every dictionary is a topic. A topics has an identifier (num), title
+    (title), description (desc) and narrative (narr).
+    """
     result = []
     read_topic = False
     read_num = False
@@ -87,6 +92,10 @@ def parse_topics(topics_text):
     return result
 
 def load_wolf(wolf_xml):
+    """Parse the WOLF xml-like file into a dict of literals to senses.
+
+    For every literal the a list of senses is made.
+    """
     global sense_dict
     sense_dict = {}
     id_re = re.compile("<ID>(.*)</ID>")
@@ -103,6 +112,10 @@ def load_wolf(wolf_xml):
             sense_dict[word] = sense_dict.get(word, []) + [sense_id,]
 
 def normalize(word):
+    """Put a word in a more normal form.
+
+    Put in lower case, remove sticky dots and commas, and remove sticky articles
+    """
     w = word.lower()
     w = w.strip("\"'.,")
     if(w.startswith("l'")):
@@ -112,28 +125,45 @@ def normalize(word):
     return w
 
 def word_senses(word):
+    """Return a list of senses for a literal"""
     return sense_dict.get(word, [])
 
 stop_words = ["le", "la", "les", "un", "une", "de", "des"]
 
-def words_wsexpand(words):
+def words_expand(words, word_sense_expand=True, translate=True,
+        translate_expanded=False):
+    """Return a list of words, word sense expanded and translated.
+
+    Options:
+    words : The words, in a string.
+    word_sense_expand : Try to expand a word into a list of word senses
+    translate : Translate not-expanded words
+    translate_expanded : Returns word senses and a translation for expandable
+        words.
+    """
     expansion = []
     for word in words.split():
         word_n = normalize(word)
         if(word_n in stop_words):
             continue # Remove stop words
-        ws = word_senses(word_n)
-        if(ws):
-            expansion = expansion + ws
-            continue
+        if(word_sense_expand):
+            ws = word_senses(word_n)
+            if(ws):
+                expansion = expansion + ws
+                if(not translate_expanded):
+                    continue
+        if(translate):
+            if(False): #found translation
+                continue
         expansion.append(word_n)
     return expansion
 
-def topics_wsexpand(topics, out):
+def topics_expand(topics, out):
+    """Expand and translate a list of topics"""
     for topic in topics:
-        expansion = words_wsexpand(topic["title"])
-        expansion = expansion + words_wsexpand(topic["desc"])
-        expansion = expansion + words_wsexpand(topic["narr"])
+        expansion = words_expand(topic["title"])
+        expansion = expansion + words_expand(topic["desc"])
+        expansion = expansion + words_expand(topic["narr"])
         out.write(topic['num'] + "\n")
         for w in expansion: out.write(w + " ")
         out.write("\n\n")
@@ -146,7 +176,7 @@ def main():
     topics = parse_topics(codecs.open(sys.argv[2], "r", "latin1"))
     if(sys.argv[1] == 'wsexpand'):
         load_wolf(open('wolf.xml'))
-        topics_wsexpand(topics, out)
+        topics_expand(topics, out)
 
 if __name__ == "__main__":
     main()

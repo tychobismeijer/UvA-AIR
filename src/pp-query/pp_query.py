@@ -2,6 +2,8 @@ import re
 import sys
 import codecs
 
+### Reading the list of topics from a file ###
+
 str_topic_start = "<top>"
 str_topic_stop  = "</top>"
 str_num_start   = "<num>"
@@ -91,6 +93,8 @@ def parse_topics(topics_text):
                 narr = ""
     return result
 
+### WOLF and finding word senses ###
+
 def load_wolf(wolf_xml):
     """Parse the WOLF xml-like file into a dict of literals to senses.
 
@@ -111,6 +115,25 @@ def load_wolf(wolf_xml):
             word = literal_g[0]
             sense_dict[word] = sense_dict.get(word, []) + [sense_id,]
 
+def word_senses(word):
+    """Return a list of senses for a literal"""
+    return sense_dict.get(word, [])
+
+### Loading dictionary and translaton words ###
+
+translate_dict = {}
+
+def load_dict(dict_text):
+    global translate_dict
+    for line in dict_text:
+        word, translation = line.split('|')
+        translate_dict[word.strip()] = translation.strip()
+
+def translate_word(word):
+    return translate_dict.get(word, None)
+
+### Processing of the bag of words in the query ###
+
 def normalize(word):
     """Put a word in a more normal form.
 
@@ -123,10 +146,6 @@ def normalize(word):
     if(w.startswith("d'")):
         w = w[2:]
     return w
-
-def word_senses(word):
-    """Return a list of senses for a literal"""
-    return sense_dict.get(word, [])
 
 stop_words = ["le", "la", "les", "un", "une", "de", "des"]
 
@@ -153,7 +172,9 @@ def words_expand(words, word_sense_expand=True, translate=True,
                 if(not translate_expanded):
                     continue
         if(translate):
-            if(False): #found translation
+            translation = translate_word(word)
+            if(translation): #found translation
+                expansion.append(translation)
                 continue
         expansion.append(word_n)
     return expansion
@@ -168,6 +189,8 @@ def topics_expand(topics, out):
         for w in expansion: out.write(w + " ")
         out.write("\n\n")
 
+### Main program ###
+
 def main():
     if(len(sys.argv) != 3):
         print("Usage: pp-query wsexpand topicfilename")
@@ -176,6 +199,7 @@ def main():
     topics = parse_topics(codecs.open(sys.argv[2], "r", "latin1"))
     if(sys.argv[1] == 'wsexpand'):
         load_wolf(open('wolf.xml'))
+        load_dict(open('french_04.dict'))
         topics_expand(topics, out)
 
 if __name__ == "__main__":

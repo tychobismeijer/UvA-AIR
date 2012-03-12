@@ -120,6 +120,11 @@ def word_senses(word):
     result = []
     for s in sense_dict.get(word, []):
         result.extend(map_sense(s))
+    # Try to deal with simple morphology
+    if (result == [] and word[len(word)-1] == 's'):
+        for s in sense_dict.get(word[0:len(word)-1], []):
+            result.extend(map_sense(s))
+
     return result
 
 def parse_sensemap(sensemap_m_text, sensemap_p_text):
@@ -227,7 +232,7 @@ def normalize(word):
 
 stop_words = ["le", "la", "les", "un", "une", "de", "des"]
 
-def words_expand(words, word_sense_expand=True, translate=True,
+def words_expand(words, word_sense_expand=True, translate=False,
         translate_expanded=False):
     """Return a list of words, word sense expanded and translated.
 

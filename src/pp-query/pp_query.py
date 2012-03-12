@@ -232,7 +232,7 @@ def normalize(word):
 
 stop_words = ["le", "la", "les", "un", "une", "de", "des"]
 
-def words_expand(words, word_sense_expand=True, translate=False,
+def words_expand(words, word_sense_expand=True, translate=True,
         translate_expanded=False):
     """Return a list of words, word sense expanded and translated.
 

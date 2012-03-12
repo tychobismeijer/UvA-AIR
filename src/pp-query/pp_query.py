@@ -117,19 +117,97 @@ def load_wolf(wolf_xml):
 
 def word_senses(word):
     """Return a list of senses for a literal"""
-    return sense_dict.get(word, [])
+    result = []
+    for s in sense_dict.get(word, []):
+        result.extend(map_sense(s))
+    return result
+
+def parse_sensemap(sensemap_m_text, sensemap_p_text):
+    """Parse a polysemous and a monosemous sensemap.
+
+    Returns one dictionary mapping senses to a list of senses in the the higher
+    versioned wordnet.
+    """
+    result = {}
+    # Parse polysemous sensemap
+    for line in sensemap_p_text:
+        l = line.split()
+        score = l[0] # Score of the polysemous mapping
+        sense1 = l[1].split(';')[1]
+        if (len(l) > 2):
+            senses2 = set([s.split(';')[1] for s in l[2:]])
+        if (sense1 in result):
+            result[sense1] |= senses2
+        else:
+            result[sense1] = senses2
+
+    # Parse monosemous sensemap
+    for line in sensemap_m_text:
+        l = line.split()
+        sense1 = l[1]
+        senses2 = set([l[3]])
+        if (sense1 in result):
+            result[sense1] |= senses2
+        else:
+            result[sense1] = senses2
+
+    return result
+
+def load_sensemap(smt_2_0_noun_m, smt_2_0_verb_m, smt_2_1_noun_m, smt_2_1_verb_m,
+        smt_2_0_noun_p, smt_2_0_verb_p, smt_2_1_noun_p, smt_2_1_verb_p):
+    """Load all the sensemaps, so they are available for map_sense"""
+    global sm_2_0
+    global sm_2_1
+    sm_2_0 = {
+        'noun' : parse_sensemap(smt_2_0_noun_m, smt_2_0_noun_p),
+        'verb' : parse_sensemap(smt_2_0_verb_m, smt_2_0_verb_p)
+    }
+    sm_2_1 = {
+        'noun' : parse_sensemap(smt_2_1_noun_m, smt_2_1_noun_p),
+        'verb' : parse_sensemap(smt_2_1_verb_m, smt_2_1_verb_p)
+    }
+
+sense_wolf_re = re.compile("ENG20-(\d*)-([nva])")
+def map_sense(sense_wolf):
+    """Maps a sense from Wordnet 2.0 to Wordnet 3.0.
+
+    First use load_sensemap to load the sensemaps before using this function.
+    """
+    sense_wolf_m = sense_wolf_re.match(sense_wolf)
+    if (not sense_wolf_m):
+        #print("ERROR: sense not recognized: " + sense_wolf)
+        return []
+    sense_2_0 = sense_wolf_m.group(1)
+    sense_class = sense_wolf_m.group(2)
+    if (sense_class == 'n'):
+        sm1 = sm_2_0['noun']
+        sm2 = sm_2_1['noun']
+    elif (sense_class == 'v'):
+        sm1 = sm_2_0['verb']
+        sm2 = sm_2_1['verb']
+    else:
+        #print("ERROR: don't know what do with class: " + sense_class)
+        return [] 
+    senses_2_1 = sm1.get(sense_2_0, [])
+    senses_3_0 = []
+    for s in senses_2_1:
+        for s2 in sm2.get(s, []):
+            senses_3_0.append(s2 + "-" + sense_class)
+    return senses_3_0
 
 ### Loading dictionary and translaton words ###
 
 translate_dict = {}
 
 def load_dict(dict_text):
+    """Loads a dictionary for use of translate_word."""
     global translate_dict
     for line in dict_text:
         word, translation = line.split('|')
         translate_dict[word.strip()] = translation.strip()
 
 def translate_word(word):
+    """Translate one word by looking it up in the dictionary"""
     return translate_dict.get(word, None)
 
 ### Processing of the bag of words in the query ###
@@ -198,6 +276,10 @@ def main():
     out = sys.stdout
     topics = parse_topics(codecs.open(sys.argv[2], "r", "latin1"))
     if(sys.argv[1] == 'wsexpand'):
+        load_sensemap(open('2.0to2.1.noun.mono'), open('2.0to2.1.verb.mono'),
+            open('2.1to3.0.noun.mono'), open('2.1to3.0.verb.mono'),
+            open('2.0to2.1.noun.poly'), open('2.0to2.1.verb.poly'),
+            open('2.1to3.0.noun.poly'), open('2.1to3.0.verb.poly'))
         load_wolf(open('wolf.xml'))
         load_dict(open('french_04.dict'))
         topics_expand(topics, out)

@@ -19,11 +19,22 @@ str_te_stop = '</TE>'
 str_doc_start = '<DOC>'
 str_doc_stop = '</DOC>'
 
-def preprocess(doc_in, doc_out):
+def preprocess(doc_in):
     """Preprocesses the GH95 document of CLEF"""
-    def output(text, doc_id):
-        doc_out.write(doc_id + "\n")
-        doc_out.write(text.replace("\n", " ") + "\n\n")
+    output_d = {
+        'count' : 1,
+        'fn_count' : 1,
+        'doc_out' : open("la2002-1-pp", 'w')
+    }
+    def output(text, doc_id, o=output_d):
+        print(o['count'])
+        o['count'] = o['count'] + 1
+        if (o['count'] > 1000):
+            o['count'] = 1
+            o['fn_count'] = o['fn_count'] + 1
+            o['doc_out'] = open("la2002-" + str(o['fn_count']) + "-pp", 'w')
+        o['doc_out'].write(doc_id + "\n")
+        o['doc_out'].write(text.replace("\n", " ") + "\n\n")
 
     doc_id = None
     reading_doc = False
@@ -78,7 +89,7 @@ def preprocess(doc_in, doc_out):
 
 def main():
     for fn in sys.argv[1:]:
-        preprocess(open(fn), sys.stdout)
+        preprocess(open(fn))
 
 if __name__ == "__main__":
     main()

@@ -32,7 +32,7 @@ class QueryHelper():
 
             queryFile.readline()
 
-            returnedDocs = 1000
+            returnedDocs = 60000
             collector = TopScoreDocCollector.create(returnedDocs, True)
 
             indSearcher.search(query, collector)

@@ -8,13 +8,14 @@ class ROCCalculator():
     @staticmethod
     def calcRoc(Qrel, resultsDir):
 
-        nrOfPoints = 10
+        nrOfPoints = 50
         point = 1
+
+        start = 0.
 
         curve = open("Curve", 'w')
 
-        while(point <= nrOfPoints):
-
+        while(start <= 1):
             startId = 201
             stopId = 250
 
@@ -25,8 +26,6 @@ class ROCCalculator():
             nrOfResults = 0
 
             while(id <= stopId):
-                print "Calculating id: " + str(id) +" for point " +str(point)
-
                 result = open(resultsDir + "/" + str(id))
                 results = result.readlines()
                 result.close()
@@ -54,17 +53,25 @@ class ROCCalculator():
 
                 id += 1
 
-            print "Found: " + str(totalFound) + " + not found: " + str(totalNotFound)
+            #print "Found: " + str(totalFound) + " + not found: " + str(totalNotFound)
 
             recall = totalFound / (totalFound + totalNotFound)
             precision = totalFound / nrOfResults
 
-            print "Recall: " +str(recall)
-            print "Precision: " +str(precision)
+            #print "Recall: " +str(recall)
+            #print "Precision: " +str(precision)
 
-            curve.write(str(recall)+", "+str(precision)+"\n")
+            print "Run number: " +str(point)
 
             point += 1
+
+            if recall > start:
+
+                curve.write(str(recall)+", "+str(precision)+"\n")
+
+                print "Recall "+str(start)+" calculated."
+
+                start += .1
 
 if __name__ == '__main__':
     initVM()

@@ -1,0 +1,8 @@
+The calc-roc.py script will calculate the precision / recall curves.
+
+Needed are:
+
+- A results directory with the ranked retrieved documents per query. This can be obtained by the query_2004.py script in the index folder.
+- The qrel file.
+
+Usage: python calc-roc.py <qrel file> <results dir>

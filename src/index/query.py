@@ -1,48 +1,68 @@
 import os, re, sys
 from subprocess import *
-from lucene import IndexSearcher, StandardAnalyzer, Document, Field, QueryParser, Sort, TopScoreDocCollector, Term, TermQuery
+from lucene import IndexSearcher, IndexReader, StandardAnalyzer, Document, Field, QueryParser, Sort, TopScoreDocCollector, Term, TermQuery
 from lucene import SimpleFSDirectory, File, initVM, Version
 
 class QueryHelper(): 
 
     @staticmethod
-    def query(indexName, queryString):
-
-        indSearcher = IndexSearcher(SimpleFSDirectory(File(indexName)))
-        qp = QueryParser(Version.LUCENE_CURRENT, "content", StandardAnalyzer(Version.LUCENE_CURRENT))
-        qp.setDefaultOperator(qp.Operator.AND)
-         
-        query = qp.parse(queryString.replace("-","_"))
-                
-        aux = indSearcher.search(query, 100)
-        results = aux.scoreDocs
-        hits = aux.totalHits
-        
+    def query(indexName, queryFile, runName):
+        indReader = IndexReader.open(SimpleFSDirectory(File(indexName)))
+        indSearcher = IndexSearcher(indReader)
         ir = indSearcher.getIndexReader()
 
-        #results = collector.topDocs()
-        i = 0
+        qp = QueryParser(Version.LUCENE_CURRENT, "content", StandardAnalyzer(Version.LUCENE_CURRENT))
 
-        res = []
-    
-        for r in results:        
-            doc = ir.document(i)
-            res.insert(i, doc.get('id'))
-            i+=1
-            
-        return res
+        f = open('results-'+runName, 'w')
 
+        while(True):
+            id = queryFile.readline()
+
+            if id == "":
+                break
+
+            id = id.replace("C","")
+            id = id.replace("\n","")
+
+            queryString = queryFile.readline()
+            queryString = queryString.replace("?","")
+            queryString = queryString.replace("*","")
+            queryString = queryString.replace("-","_")
+            queryString = queryString.replace("\n","")
+
+            query = qp.parse(queryString)
+
+            queryFile.readline()
+
+            returnedDocs = 1000
+            collector = TopScoreDocCollector.create(returnedDocs, True)
+
+            indSearcher.search(query, collector)
+
+            hits = collector.topDocs().scoreDocs
+
+            size = len(hits)
+            print "Total hits for query " +id+ ": "+str(size)
+
+            i = 0
+            for hit in hits:        
+                docId = hits[i].doc
+                score = hits[i].score
+                doc = ir.document(docId)
+                j = i + 1
+                f.write(id + " 0 " + doc.get('id') + " " + str(j) + " " + str(score) +" " + runName +"\n")
+                i+=1
+
+        f.close()
 
 if __name__ == '__main__':
     initVM()
     
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         indexName = sys.argv[1]
-        queryString = sys.argv[2]
-        res = QueryHelper.query(indexName, queryString)
-        print res
+        queryFile = sys.argv[2]
+        runName = sys.argv[3]
+        QueryHelper.query(indexName, open(queryFile), runName)
+
     else:
-        print "Usage: python query.py {words | senses} [query]"
-
-
-    
+        print "Usage: python query.py <indexName> <queryFile> <RunName>"

@@ -1,5 +1,14 @@
 #!/usr/bin/env Rscript
 args = commandArgs(T)
+
+names = vapply(args,
+    function (name) {
+        name = basename(name)
+        name = sub('-ass$', '', name)
+        name = gsub('-', ' ', name, fixed=T)
+    },
+    'character')
+
 filename1 = args[1]
 data1 = read.table(filename1)
 filename2 = args[2]
@@ -14,13 +23,13 @@ for (t in topics) {
 }
 map_diff = sort(map_diff, decreasing=T)
 pdf(file='diff.pdf',
-    width=10,
-    height=6,
-    fonts=)
+    width=7.5,
+    height=3,
+    pointsize=10)
 par(xaxs='i', yaxs='i', mar=c(2, 4, 2, 2))
 labels.xpos = barplot(map_diff,
         axisnames=F,
-        main=paste(filename1, " and ", filename2, " MAP Difference"),
+        main=paste(names[1], " and ", names[2], " MAP Difference"),
         ylim=c(-1, 1),
         ylab=expression(paste(Delta, " MAP")))
 labels.ypos = pmax(map_diff, -1)

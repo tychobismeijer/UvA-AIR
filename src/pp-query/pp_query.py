@@ -262,13 +262,13 @@ def words_expand(words, word_sense_expand=True, translate=True,
         expansion.append(word_n)
     return expansion
 
-def topics_expand(topics, out):
+def topics_expand(topics, out, word_sense_expand=True):
     """Expand and translate a list of topics"""
     for topic in topics:
-        expansion = words_expand(topic["title"])
-        expansion = expansion + words_expand(topic["desc"])
-        expansion = expansion + words_expand(topic["narr"])
         out.write(topic['num'] + "\n")
+        expansion = words_expand(topic["title"], word_sense_expand)
+        expansion = expansion + words_expand(topic["desc"], word_sense_expand)
+        expansion = expansion + words_expand(topic["narr"], word_sense_expand)
         for w in expansion: out.write(w + " ")
         out.write("\n\n")
 
@@ -286,8 +286,13 @@ def main():
             open('2.0to2.1.noun.poly'), open('2.0to2.1.verb.poly'),
             open('2.1to3.0.noun.poly'), open('2.1to3.0.verb.poly'))
         load_wolf(open('wolf.xml'))
-        load_dict(open('french_04.dict'))
+        load_dict(open('dict'))
         topics_expand(topics, out)
+
+    if(sys.argv[1] == 'translate'):
+        load_dict(open('dict'))
+        topics_expand(topics, out, word_sense_expand=False)
+
 
 if __name__ == "__main__":
     main()

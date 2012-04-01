@@ -19,7 +19,7 @@ def parse_topics(topics_text):
 
 def translate(words):
     service = build('translate', 'v2',
-        developerKey='XXX')
+        developerKey='AIzaSyBIfNjxbJ8m2rF_CA8ubdXmyv9j0UjjOkY')
     words = list(words)
     words_t = []
     while(True):
